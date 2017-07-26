@@ -1,3 +1,28 @@
+/*
+Strong Motion Noise Check
+
+Queries hazard database for strong motion values and orders by most likely station
+to be non performing with data quality issues.
+
+Please refer for examples
+https://wiki.geonet.org.nz/display/dmcops/Strong+Motion+Noise+checks
+
+As hazard database only stores summarised pga, pgv and mmi data values ranging for an
+hour, script should be set up to run every hour. It will create files
+at the start of every day and append data to that file every hour. This is to
+allow data to be collected for longer periods as data quality poor performance
+may be related to a regular weeekly factor for instance.
+
+Dependancies:
+For script to run hazard_r user password should must be the environment variable
+HAZARD_PASSWD
+
+Also needs to run in Geonet VPN.
+
+Logs and writes data files to /tmp. Change to appropiate.
+
+*/
+
 package main
 
 import (
