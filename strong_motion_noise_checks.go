@@ -9,12 +9,12 @@ https://wiki.geonet.org.nz/display/dmcops/Strong+Motion+Noise+checks
 
 As hazard database only stores summarised pga, pgv and mmi data values ranging for an
 hour, script should be set up to run every hour. It will create files
-at the start of every day and append data to that file every hour. This is to
-allow data to be collected for longer periods as data quality poor performance
+for each noise check if they do not exist and continually append to these files once they
+do exist. This is to allow data to be collected for longer periods as data quality poor performance
 may be related to a regular weeekly factor for instance.
 
 Dependancies:
-For script to run hazard_r user password should must be the environment variable
+For script to run hazard_r user password must be an environment variable
 HAZARD_PASSWD
 
 Also needs to run in Geonet VPN.
@@ -31,7 +31,6 @@ import (
         "os"
         _ "github.com/lib/pq"
         "log"
-        "time"
         "path/filepath"
 )
 
@@ -109,28 +108,18 @@ var (
 
 func init() {
 
-        file, err := os.OpenFile("/tmp/testdbquery.log", os.O_RDWR|os.O_CREATE, 0666)
+        file, err := os.OpenFile("/tmp/strong_motion_noise_check.log", os.O_RDWR|os.O_CREATE, 0666)
         if err != nil {
                 fmt.Println("Failed initializing logfile:", err)
                 os.Exit(1)
         }
 
         trace = log.New(file, "", log.LstdFlags|log.Lshortfile)
-
-        t := time.Now()
-        dir = filepath.Join("/tmp/",t.Format("20060102"))
-        trace.Println("Files in: " + dir)
-
-        if !(checkPath(dir)) {
-                err := os.MkdirAll(dir, os.ModePerm)
-                if err != nil {
-                        trace.Fatalf("Failed creating dir: %s", err)
-                }
-        }
+        dir = "/tmp"
 }
 
 func main() {
-
+        // Could set all of these to be environment variables
         passwd, ok := os.LookupEnv("HAZARD_PASSWD")
         if !ok {
                 trace.Fatalln("HAZARD_PASSWD not set for environment.")
@@ -151,7 +140,7 @@ func main() {
         trace.Println("Getting top noise counts for Strong Motion")
         noiseCount(db)
 
-        trace.Println("Getting PGV ratio differnce for Strong Motion")
+        trace.Println("Getting PGV ratio difference for Strong Motion")
         ratioDiff(db)
 }
 
@@ -217,15 +206,4 @@ func ratioDiff(db *sql.DB) {
                 }
                 file.WriteString(fmt.Sprintf("%s,%s,%s,%f,%f,%f\n", timestamp, station, blacklist, ratio, maxVertical, maxHorizontal))
         }
-}
-
-func checkPath(path string) (exists bool) {
-        _, err := os.Stat(path)
-
-        if os.IsNotExist(err) {
-                if err != nil {
-                        return false
-                }
-        }
-        return true
 }
